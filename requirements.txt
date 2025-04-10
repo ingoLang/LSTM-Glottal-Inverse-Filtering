@@ -1,0 +1,2 @@
+torchaudio==2.6.0
+SoundFile==0.13.1
