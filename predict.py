@@ -42,7 +42,7 @@ class Predictor:
             # In the synthetic dataset all files have the same sample-rate, but better check
         return speech_signal, glottal_flow_derivative_signal, glottal_flow_signal, speech_signal_sample_rate
 
-    def loadEGGSignal(self, egg_signal_address):
+    def load_EGGsignal(self, egg_signal_address):
         """Load and preprocess Files the same way, like in GIFDataset-Class.
         """
         try:
@@ -53,7 +53,7 @@ class Predictor:
             print('Error with loading files:' + egg_signal_address)
             return
 
-    def loadSpeechSignal(self, speech_signal_address):
+    def load_speech_signal(self, speech_signal_address):
         """Load and preprocess Files the same way, like in GIFDataset-Class.
         """
         try:
@@ -84,13 +84,13 @@ class Predictor:
 
         return down_sampled_signal
 
-    def calculateDerivative(self, signal):
+    def calculate_derivative(self, signal):
         # For derivative use numpy (For Pytorch recommended!)
         derivative_signal = torch.from_numpy(np.gradient(signal.cpu().numpy()))
         return derivative_signal
 
 
-    def predictSyntheticSignals(self, model, criterion, speech_signal_address, glottal_flow_derivative_signal_address,
+    def predict_synthetic_signals(self, model, criterion, speech_signal_address, glottal_flow_derivative_signal_address,
                                 glottal_flow_signal_address):
 
         # Load Signals
@@ -134,7 +134,7 @@ class Predictor:
 
     def predict(self, model, speech_signal_address):
         # Load Signals
-        speech_signal, speech_signal_sample_rate = self.loadSpeechSignal(speech_signal_address)
+        speech_signal, speech_signal_sample_rate = self.load_speech_signal(speech_signal_address)
 
         # Returns a downsampled signal. Specify "output_sample_rate" in hyperparameters-data
         speech_signal = self.preprocess(speech_signal, speech_signal_sample_rate)
@@ -157,16 +157,16 @@ class Predictor:
 
         return signals
 
-    def predictAndGetEGGSignal(self, model, speech_signal_address, egg_signal_address):
+    def predict_and_get_EGGsignal(self, model, speech_signal_address, egg_signal_address):
         # Load Signals
-        speech_signal, speech_signal_sample_rate = self.loadSpeechSignal(speech_signal_address)
-        egg_signal, egg_signal_sample_rate = self.loadEGGSignal(egg_signal_address)
+        speech_signal, speech_signal_sample_rate = self.load_speech_signal(speech_signal_address)
+        egg_signal, egg_signal_sample_rate = self.load_EGGsignal(egg_signal_address)
 
         # Returns a downsampled signal. Specify "output_sample_rate" in hyperparameters-data
         speech_signal = self.preprocess(speech_signal, speech_signal_sample_rate)
         egg_signal = self.preprocess(egg_signal, egg_signal_sample_rate)
 
-        egg_derivative_signal = self.calculateDerivative(egg_signal)
+        egg_derivative_signal = self.calculate_derivative(egg_signal)
 
         # Bring to Device
         speech_signal = speech_signal.to(self.device)
