@@ -26,7 +26,7 @@ class BiLSTM(nn.Module):
             input_size=self.input_size_lstm,
             hidden_size=self.hidden_size_lstm,
             num_layers=self.number_layers_lstm,
-            batch_first=True,  # https://discuss.pytorch.org/t/could-someone-explain-batch-first-true-in-lstm/15402/4
+            batch_first=True,
             bidirectional=self.bidirectional_lstm
 
         )

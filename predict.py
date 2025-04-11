@@ -1,29 +1,7 @@
 import torch
 import torchaudio
-from model import BiLSTM
-import os
-import json
-
-def loadModelData(model_path, hyperparameters, debug_mode):
-    """
-    Loads model data
-
-    :param model_path:
-    :param hyperparameters:
-    :param debug_mode:
-    :return:
-    """
-
-    # Initialize Model
-    model = BiLSTM(
-        hyperparameters,
-        debug_mode
-
-    )
-    # Load Model
-    model_data = torch.load(model_path, map_location=torch.device(device))
-    model.load_state_dict(model_data['model_state_dict'])
-    return model
+import pandas as pd
+import numpy as np
 
 
 class Predictor:
@@ -32,29 +10,127 @@ class Predictor:
         self.hyperparameters = hyperparameters
 
         self.input_size_lstm = hyperparameters["input_size_lstm"]  # Size
-        self.output_sample_rate = hyperparameters["output_sample_rate"] # Sample rate of the DeepGIF Process (8kHz)
+        self.output_sample_rate = hyperparameters["output_sample_rate"]
         self.criterion_name = hyperparameters["criterion"]
         self.device = device
 
-    def preprocess(self, signal, old_sample_rate):
-        """Preprocesses Files: Changing Samplerate
+    def load_synthetic_signals(self, speech_signal_address, glottal_flow_derivative_signal_address,
+                             glottal_flow_signal_address):
+        """Load Files the same way, like in GIFDataset-Class.
+        In Addition, load glottal flow signal
+        """
+        try:
+            speech_signal, speech_signal_sample_rate = torchaudio.load(speech_signal_address)
+            channel = 0
+            speech_signal = speech_signal[channel]
+
+            glottal_flow_derivative_data = pd.read_csv(glottal_flow_derivative_signal_address, sep=' ')
+            glottal_flow_derivative = glottal_flow_derivative_data['glottal_flow_derivative[cm^3/s^2]']
+            glottal_flow_derivative_signal = torch.tensor(glottal_flow_derivative.values)
+
+            glottal_flow_data = pd.read_csv(glottal_flow_signal_address, sep=' ')
+            glottal_flow = glottal_flow_data['glottal_flow[cm^3/s]']
+            glottal_flow_signal = torch.tensor(glottal_flow.values)
+
+
+        except:
+            print('Error with loading files:' + speech_signal_address + ',' + glottal_flow_derivative_signal_address)
+            return
+
+        if speech_signal.size() != glottal_flow_derivative_signal.size():
+            print('Problems with files:' + speech_signal_address + ',' + glottal_flow_derivative_signal_address)
+            # In the synthetic dataset all files have the same sample-rate, but better check
+        return speech_signal, glottal_flow_derivative_signal, glottal_flow_signal, speech_signal_sample_rate
+
+    def loadEGGSignal(self, egg_signal_address):
+        """Load and preprocess Files the same way, like in GIFDataset-Class.
+        """
+        try:
+            egg_signal, egg_signal_sample_rate = torchaudio.load(egg_signal_address)  # Load EGG Signals
+            return egg_signal[0], egg_signal_sample_rate
+
+        except:
+            print('Error with loading files:' + egg_signal_address)
+            return
+
+    def loadSpeechSignal(self, speech_signal_address):
+        """Load and preprocess Files the same way, like in GIFDataset-Class.
+        """
+        try:
+            speech_signal, speech_signal_sample_rate = torchaudio.load(speech_signal_address)
+            channel = 0
+            speech_signal = speech_signal[channel]
+
+            return speech_signal, speech_signal_sample_rate
+
+        except:
+            print('Error with loading files:' + speech_signal_address)
+            return
+
+    def preprocess(self, signal, sample_rate):
+        """Preprocesses Files: Changing Samplerate and Windowing
         """
         # Bring signal to float32
         signal = signal.float()
-
-        # Change Sample-Rate from e.g.  44100Hz to output_sample_rate Hz
+        # Change Sample-Rate from 44100Hz to output_sample_rate Hz
         new_sample_rate = self.output_sample_rate
-
         # Torch Audio to downsample signals: Algorithm: sinc-interpolation (no low-pass filtering needed)
-        downsample = torchaudio.transforms.Resample(old_sample_rate,
+        downsample = torchaudio.transforms.Resample(sample_rate,
                                                     new_sample_rate,
                                                     resampling_method='sinc_interpolation')
         down_sampled_signal = downsample(signal)
+
+        # print(down_sampled_speech_signal.dtypes)
+
         return down_sampled_signal
 
-    def loadSpeechSignal(self, speech_signal_file_address):
-        speech_signal, sample_rate = torchaudio.load(speech_signal_file_address)
-        return speech_signal, sample_rate
+    def calculateDerivative(self, signal):
+        # For derivative use numpy (For Pytorch recommended!)
+        derivative_signal = torch.from_numpy(np.gradient(signal.cpu().numpy()))
+        return derivative_signal
+
+
+    def predictSyntheticSignals(self, model, criterion, speech_signal_address, glottal_flow_derivative_signal_address,
+                                glottal_flow_signal_address):
+
+        # Load Signals
+        speech_signal, glottal_flow_derivative_signal, glottal_flow_signal, sample_rate = self.load_synthetic_signals(
+            speech_signal_address, glottal_flow_derivative_signal_address, glottal_flow_signal_address)
+
+        # Preprocess Signals
+        # Returns a downsampled signal. Specify "output_sample_rate" in hyperparameters-data
+        speech_signal = self.preprocess(speech_signal, sample_rate)
+        glottal_flow_derivative_signal = self.preprocess(glottal_flow_derivative_signal, sample_rate)
+        glottal_flow_signal = self.preprocess(glottal_flow_signal, sample_rate)
+
+        # Bring to Device
+        speech_signal = speech_signal.to(self.device)
+        glottal_flow_derivative_signal = glottal_flow_derivative_signal.to(self.device)
+
+        # Preallocate
+        predicted_glottal_flow_derivative_signal = torch.tensor([]).to(self.device)
+        signal_length = speech_signal.size(0)
+
+        with torch.no_grad():
+            # Reshape Tensor
+            input_data = speech_signal.view(-1, signal_length, self.input_size_lstm)
+
+            # Feed Data into Model
+            predicted_glottal_flow_derivative_signal = model(input_data)
+
+            if self.criterion_name == "MSE":
+                loss = criterion(predicted_glottal_flow_derivative_signal, glottal_flow_derivative_signal)
+            if self.criterion_name == "COSINE":
+                y = torch.ones(1).to(self.device)  # y is control parameter for the cosine distance error
+                loss = criterion(predicted_glottal_flow_derivative_signal.view(-1, 1),
+                                 glottal_flow_derivative_signal.view(-1, 1),
+                                 y.view(1).to(self.device))
+            signal_loss = loss.mean().item()
+
+        signals = [speech_signal, glottal_flow_derivative_signal, glottal_flow_signal,
+                   predicted_glottal_flow_derivative_signal]
+
+        return signals, signal_loss
 
     def predict(self, model, speech_signal_address):
         # Load Signals
@@ -78,30 +154,36 @@ class Predictor:
             predicted_glottal_flow_derivative_signal = model(input_data)
 
         signals = [speech_signal, predicted_glottal_flow_derivative_signal]
+
         return signals
 
-if __name__ == '__main__':
-    # Set paths
-    model_folder_address = 'Model'
-    model_configuration_folder_address = 'ModelConfigurationFiles'
-    model_name = 'Bi_LSTM_HiddenSize_30_LearnRate_0_01'
-    dataset_address = 'Dataset'
-    model_address = os.path.join(model_folder_address, str(model_name + '.pth'))
-    model_configuration_file_address = os.path.join(model_folder_address,
-                                                    model_configuration_folder_address,
-                                                    str(model_name + '.json'))
-    speech_signal_address = os.path.join(dataset_address, 'Berliner_001_Breathy', 'Berliner_001_Breathy_F0Offset0p241_PhoneRate0p734_NoNoise.wav')
-    device = 'cpu'
+    def predictAndGetEGGSignal(self, model, speech_signal_address, egg_signal_address):
+        # Load Signals
+        speech_signal, speech_signal_sample_rate = self.loadSpeechSignal(speech_signal_address)
+        egg_signal, egg_signal_sample_rate = self.loadEGGSignal(egg_signal_address)
 
-    with open(model_configuration_file_address) as f:
-        hyperparameters = json.load(f)
-    print(hyperparameters)
-    print('Model configuration with hyperparameters loaded!')
+        # Returns a downsampled signal. Specify "output_sample_rate" in hyperparameters-data
+        speech_signal = self.preprocess(speech_signal, speech_signal_sample_rate)
+        egg_signal = self.preprocess(egg_signal, egg_signal_sample_rate)
 
-    model = loadModelData(model_address, hyperparameters, debug_mode=False)
+        egg_derivative_signal = self.calculateDerivative(egg_signal)
 
-    predictor = Predictor(hyperparameters, device)
+        # Bring to Device
+        speech_signal = speech_signal.to(self.device)
+        egg_signal = egg_signal.to(self.device)
 
-    signals = predictor.predict(model, speech_signal_address) #signals = [speech_signal, predicted_glottal_flow_derivative_signal]
+        # Preallocate
+        predicted_glottal_flow_derivative_signal = torch.tensor([]).to(self.device)
+        signal_length = speech_signal.size(0)
 
-    print(signals)
+        with torch.no_grad():
+            # Reshape Tensor
+            input_data = speech_signal.view(-1, signal_length, self.input_size_lstm)
+
+            # Feed Data into Model
+            predicted_glottal_flow_derivative_signal = model(input_data)
+
+        signals = [speech_signal, predicted_glottal_flow_derivative_signal,  egg_signal,
+                   egg_derivative_signal]
+
+        return signals
