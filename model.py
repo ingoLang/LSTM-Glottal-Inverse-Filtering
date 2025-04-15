@@ -5,7 +5,7 @@ from torch import nn
 # Create Custom Bidirectional LSTM
 class BiLSTM(nn.Module):
 
-    def __init__(self, hyperparameters, debug_mode):
+    def __init__(self, hyperparameters: dict, debug_mode: bool):
         super(BiLSTM, self).__init__()
 
         self.input_size_lstm = hyperparameters["input_size_lstm"]
@@ -35,7 +35,7 @@ class BiLSTM(nn.Module):
         self.linear = nn.Linear(self.hidden_size_lstm * self.directions_lstm, self.output_size_linear)
 
 
-    def forward(self, input_data):
+    def forward(self, input_data : torch.tensor):
         """Defines the forward-Propagation logic
         Args:
             input_data ([Tensor]): [A 3-dimensional float tensor containing parameters]

@@ -1,15 +1,15 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
+import os
 
 class Visualizer:
-    def __init__(self, sequence_length, stride, hyperparameters):
+    def __init__(self, sequence_length: int, stride: int, hyperparameters: dict):
         self.sequence_length = sequence_length
         self.stride = stride  # Deutsch:Schrittweite
         self.sample_rate = hyperparameters["output_sample_rate"]
 
     def plot_synthetic_signal_sequence(self, speech_signal, glottal_flow_signal, glottal_flow_derivative_signal,
-                             predicted_glottal_flow_derivative_signal, sequence_index, save_figure):
+                             predicted_glottal_flow_derivative_signal, sequence_index, save_figure, signal_name = ""):
         speech_signal_numpy = speech_signal.cpu().numpy()
         glottal_flow_signal_numpy = glottal_flow_signal.cpu().numpy()
         glottal_flow_derivative_signal_numpy = glottal_flow_derivative_signal.cpu().numpy()
@@ -41,10 +41,12 @@ class Visualizer:
         axes[3].set_ylabel('Flow Derivative', size=14)
 
         if save_figure:
-            fig.savefig("Img/Predictions/SyntheticSignals_Predictions" + str(sequence_index) + ".png") #TODO
+            fig.savefig(os.path.join("Dataset", "SyntheticSignals_Predictions" + signal_name + "_" + str(sequence_index) + ".png"))
+
+        fig.show()
 
     def plot_prediction_and_EGGSignal(self, speech_signal, predicted_glottal_flow_derivative_signal,
-                                   egg_signal, egg_derivative_signal, sequence_index, save_figure):
+                                   egg_signal, egg_derivative_signal, sequence_index, save_figure, signal_name = ""):
 
         speech_signal_numpy = speech_signal.cpu().numpy()
         predicted_glottal_flow_derivative_signal_numpy = predicted_glottal_flow_derivative_signal.cpu().numpy()
@@ -77,7 +79,7 @@ class Visualizer:
         axes[3].set_ylabel('Flow Derivative', size=14)
 
         if save_figure:
-            fig.savefig("Img/Predictions/EGG_Prediction" + str(sequence_index) + ".png")
+            fig.savefig(os.path.join("Dataset", "SyntheticSignals_Predictions" + signal_name + "_" + str(sequence_index) + ".png"))
 
     # Split Signal into small Sequences: Rect-Window
     def split_signal(self, signal):
@@ -92,7 +94,7 @@ class Visualizer:
 
         return splitted_signal
 
-    def visualize_synthetic_signals(self, signals, sequence_index, save_figure):
+    def visualize_synthetic_signals(self, signals, sequence_index, save_figure, signal_name = ""):
         speech_signal = signals[0]
         glottal_flow_derivative_signal = signals[1]
         glottal_flow_signal = signals[2]
@@ -108,10 +110,11 @@ class Visualizer:
                                   splited_glottal_flow_derivative_signal[sequence_index],
                                   splited_predicted_glottal_flow_derivative_signal[sequence_index],
                                   sequence_index,
-                                  save_figure
+                                  save_figure,
+                                  signal_name
                                   )
 
-    def visualize_prediction_and_EGGsignal(self, signals, sequence_index, save_figure):
+    def visualize_prediction_and_EGGsignal(self, signals, sequence_index, save_figure, signal_name = ""):
         speech_signal = signals[0]
         predicted_glottal_flow_derivative_signal = signals[1]
         egg_signal = signals[2]
@@ -127,5 +130,6 @@ class Visualizer:
                                         splitted_egg_signal[sequence_index],
                                         splitted_egg_derivative_signal[sequence_index],
                                         sequence_index,
-                                        save_figure
+                                        save_figure,
+                                        signal_name
                                         )
