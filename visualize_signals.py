@@ -43,7 +43,7 @@ class Visualizer:
         if save_figure:
             fig.savefig(os.path.join("Dataset", "SyntheticSignals_Predictions" + signal_name + "_" + str(sequence_index) + ".png"))
 
-        fig.show()
+        plt.show()
 
     def plot_prediction_and_EGGSignal(self, speech_signal, predicted_glottal_flow_derivative_signal,
                                    egg_signal, egg_derivative_signal, sequence_index, save_figure, signal_name = ""):
@@ -81,6 +81,8 @@ class Visualizer:
         if save_figure:
             fig.savefig(os.path.join("Dataset", "SyntheticSignals_Predictions" + signal_name + "_" + str(sequence_index) + ".png"))
 
+        plt.show()
+
     # Split Signal into small Sequences: Rect-Window
     def split_signal(self, signal):
         """Splits Speech-Signal and Glottal Flow Derivative-Signal into small Sequences of 14-15ms.
@@ -90,7 +92,7 @@ class Visualizer:
         for slice_start in range(0, length - self.sequence_length + 1, self.stride):
             slice_end = slice_start + self.sequence_length
             splitted_signal.append(signal[slice_start:slice_end])
-        print("Number Sequences:" + str(len(splitted_signal)))
+        # print("Number Sequences:" + str(len(splitted_signal)))
 
         return splitted_signal
 

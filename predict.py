@@ -2,6 +2,7 @@ import torch
 import torchaudio
 import numpy as np
 
+from model import BiLSTM
 
 class Predictor:
 
@@ -90,8 +91,8 @@ class Predictor:
         return derivative_signal
 
 
-    def predict_synthetic_signals(self, model, criterion, speech_signal_address, glottal_flow_derivative_signal_address,
-                                glottal_flow_signal_address):
+    def predict_synthetic_signals(self, model: BiLSTM, criterion, speech_signal_address: str, glottal_flow_derivative_signal_address: str,
+                                glottal_flow_signal_address: str):
 
         # Load Signals
         speech_signal, glottal_flow_derivative_signal, glottal_flow_signal, sample_rate = self.load_synthetic_signals(
@@ -132,7 +133,7 @@ class Predictor:
 
         return signals, signal_loss
 
-    def predict(self, model, speech_signal_address: str):
+    def predict(self, model: BiLSTM, speech_signal_address: str) -> list:
         # Load Signals
         speech_signal, speech_signal_sample_rate = self.load_speech_signal(speech_signal_address)
 
@@ -157,7 +158,7 @@ class Predictor:
 
         return signals
 
-    def predict_and_get_EGGsignal(self, model, speech_signal_address: str, egg_signal_address: str):
+    def predict_and_get_EGGsignal(self, model, speech_signal_address: str, egg_signal_address: str) -> list:
         # Load Signals
         speech_signal, speech_signal_sample_rate = self.load_speech_signal(speech_signal_address)
         egg_signal, egg_signal_sample_rate = self.load_EGGsignal(egg_signal_address)

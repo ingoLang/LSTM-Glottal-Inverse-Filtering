@@ -1,0 +1,1 @@
+{"sequence_length": 120, "window_stride": 120, "batch_size": 1, "number_epochs": 1, "input_size_lstm": 1, "output_size_linear": 1, "output_sample_rate": 8000, "bidirectional_lstm": true, "number_layers_lstm": 1, "learning_rate": 0.01, "hidden_size_lstm": 50, "criterion": "MSE", "gradient_clip": true, "gradient_clip_value": 10}

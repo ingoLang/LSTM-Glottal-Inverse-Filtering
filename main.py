@@ -44,12 +44,12 @@ def main(model_name: str, signal_name: str, device: str):
 
     sequence_length = 640 # Data points per plotted sequence
     stride = 120 # Stride in data points
-    sequence_index = 25 # Which part/sequence of the signal do you want to plot
+    sequence_index = 28 # Which part/sequence of the signal do you want to plot
     save_figure = True 
     visualizer = Visualizer(sequence_length, stride, hyperparameters)
     visualizer.visualize_synthetic_signals([speech_signal, 
-                                        glottal_flow_signal,
                                         glottal_flow_derivative_signal,
+                                        glottal_flow_signal,
                                         predicted_glottal_flow_derivative_signal], 
                                         sequence_index, 
                                         save_figure,
@@ -58,7 +58,6 @@ def main(model_name: str, signal_name: str, device: str):
 
 
 if __name__ == '__main__':
-    
     parser = argparse.ArgumentParser()
   
     parser.add_argument("-m", "--model_name", required=False, default='Bi_LSTM_HiddenSize_30_LearnRate_0_01')
