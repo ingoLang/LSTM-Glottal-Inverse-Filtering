@@ -41,11 +41,11 @@ class Visualizer:
         axes[3].set_ylabel('Flow Derivative', size=14)
 
         if save_figure:
-            fig.savefig(os.path.join("Dataset", "SyntheticSignals_Predictions" + signal_name + "_" + str(sequence_index) + ".png"))
+            fig.savefig(os.path.join("Dataset", "Predictions_" + signal_name + "_" + str(sequence_index) + ".png"))
 
         plt.show()
 
-    def plot_prediction_and_EGGSignal(self, speech_signal, predicted_glottal_flow_derivative_signal,
+    def plot_prediction_and_eggsignal(self, speech_signal, predicted_glottal_flow_derivative_signal,
                                    egg_signal, egg_derivative_signal, sequence_index, save_figure, signal_name = ""):
 
         speech_signal_numpy = speech_signal.cpu().numpy()
@@ -116,7 +116,7 @@ class Visualizer:
                                   signal_name
                                   )
 
-    def visualize_prediction_and_EGGsignal(self, signals, sequence_index, save_figure, signal_name = ""):
+    def visualize_prediction_and_eggsignal(self, signals, sequence_index, save_figure, signal_name = ""):
         speech_signal = signals[0]
         predicted_glottal_flow_derivative_signal = signals[1]
         egg_signal = signals[2]
@@ -127,7 +127,7 @@ class Visualizer:
         splitted_egg_signal = self.split_signal(egg_signal)
         splitted_egg_derivative_signal = self.split_signal(egg_derivative_signal)
 
-        self.plot_prediction_and_EGGSignal(splitted_speech_signal[sequence_index],
+        self.plot_prediction_and_eggsignal(splitted_speech_signal[sequence_index],
                                         splited_predicted_glottal_flow_derivative_signal[sequence_index],
                                         splitted_egg_signal[sequence_index],
                                         splitted_egg_derivative_signal[sequence_index],

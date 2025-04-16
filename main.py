@@ -34,7 +34,7 @@ def main(model_name: str, signal_name: str, device: str):
     model = load_model_data(model_address, hyperparameters, device, debug_mode=False)
 
     predictor = Predictor(hyperparameters, device)
-
+    
     [_, glottal_flow_derivative_signal, glottal_flow_signal, _] = predictor.load_synthetic_signals(speech_signal_address,
                                                                     glottal_flow_derivative_signal_address, 
                                                                     glottal_flow_signal_address,
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
   
     parser.add_argument("-m", "--model_name", required=False, default='Bi_LSTM_HiddenSize_30_LearnRate_0_01')
-    parser.add_argument("-s", "--signal_name", required=False, default='Berliner_001_Breathy_F0Offset0p241_PhoneRate0p734_NoNoise')
+    parser.add_argument("-s", "--signal_name", required=False, default='Marburger_063_Modal_F0Offset2p857_PhoneRate0p846_WhiteNoise30db')
     parser.add_argument("-d", "--device", required=False, default='cpu')
     args = parser.parse_args()
     

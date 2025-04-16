@@ -43,7 +43,7 @@ class Predictor:
 
         return speech_signal, glottal_flow_derivative_signal, glottal_flow_signal, speech_signal_sample_rate
 
-    def load_EGGsignal(self, egg_signal_address: str):
+    def load_eggsignal(self, egg_signal_address: str):
         """Load and preprocess Files the same way, like in GIFDataset-Class.
         """
         try:
@@ -158,10 +158,10 @@ class Predictor:
 
         return signals
 
-    def predict_and_get_EGGsignal(self, model, speech_signal_address: str, egg_signal_address: str) -> list:
+    def predict_and_get_eggsignal(self, model, speech_signal_address: str, egg_signal_address: str) -> list:
         # Load Signals
         speech_signal, speech_signal_sample_rate = self.load_speech_signal(speech_signal_address)
-        egg_signal, egg_signal_sample_rate = self.load_EGGsignal(egg_signal_address)
+        egg_signal, egg_signal_sample_rate = self.load_eggsignal(egg_signal_address)
 
         # Returns a downsampled signal. Specify "output_sample_rate" in hyperparameters-data
         speech_signal = self.preprocess(speech_signal, speech_signal_sample_rate)

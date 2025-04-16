@@ -35,7 +35,7 @@ class BiLSTM(nn.Module):
         self.linear = nn.Linear(self.hidden_size_lstm * self.directions_lstm, self.output_size_linear)
 
 
-    def forward(self, input_data : torch.tensor):
+    def forward(self, input_data : torch.tensor)->torch.tensor:
         """Defines the forward-Propagation logic
         Args:
             input_data ([Tensor]): [A 3-dimensional float tensor containing parameters]
