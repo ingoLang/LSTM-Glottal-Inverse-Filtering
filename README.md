@@ -9,16 +9,16 @@ Authors: Ingo Langheinrich, Simon Stone, Xinyu Zhang, Peter Birkholz
 - Useful for speech analysis and voice pathology studies
 
 ## Model and Datasets
-All 84 trained models were evaluated on the OPENGLOT subset, on a test dataset syntheziced with the VocalTractLab and on the BITS Unit Selection corpus. You can find the best performing models in the repository.
+All 84 trained models were evaluated on the OPENGLOT subset, on a test dataset synthesized with the VocalTractLab and on the BITS Unit Selection corpus. You can find the best performing models in the repository.
 
 - Training dataset: VocalTractLab dataset for connected speech and glottal flow signals
 - Test and validation dataset: We recommend using the BITS dataset with EGG-signals for further validation  
 - Some example waveforms are in the dataset folder of the repository
 
 ### Preprocessing
-- Downsample the speech signal to 8 kHz with sinc-interpolation
+- Downsampling of the speech signal to 8 kHz with sinc-interpolation
 
-### Post processing
+### Postprocessing
 - All presented glottal flow signals were obtained by trapezoidal numerical integration of the derivative (code not included in the repo yet)
 
 ## Requirements
