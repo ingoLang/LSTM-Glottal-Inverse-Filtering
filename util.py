@@ -7,7 +7,7 @@ def get_model_paths(model_name:str):
     model_configuration_file_address = os.path.join(model_folder_address,
                                                     model_configuration_folder_address,
                                                     str(model_name + '.json'))
-    return model_address, model_configuration_file_address
+    return model_address, model_configuration_file_address, model_folder_address
 
 def get_signal_paths(signal_name: str):
     dataset_address = 'Dataset'
