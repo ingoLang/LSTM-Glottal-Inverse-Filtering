@@ -151,7 +151,7 @@ def train(model_name, dataset_address, load_pretrained_model):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-md", "--mode", required=False, default='predict')
-    parser.add_argument("-m", "--model_name", required=False, default='Bi_LSTM_HiddenSize_30_LearnRate_0_01_TEST')
+    parser.add_argument("-m", "--model_name", required=False, default='Bi_LSTM_HiddenSize_30_LearnRate_0_01')
     parser.add_argument("-s", "--signal_name", required=False, default='Marburger_063_Modal_F0Offset2p857_PhoneRate0p846_WhiteNoise30db')
     parser.add_argument("-d", "--dataset_path", required=False, default='Dataset/')
     parser.add_argument("-l", "--load_pretrained_model", required=False, default=False)
