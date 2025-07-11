@@ -26,12 +26,12 @@ class GIFDataset(data.Dataset):
         of __getitem__, effectivelyy choosing a random file each time.
         Reads source and target sequences from wav files and misc files.
         """
-        speech_signal_file_address, glottal_flow_derivative_file_address = self.getFilesAddress(index)
+        speech_signal_file_address, glottal_flow_derivative_file_address = self.get_files_address(index)
         channel = 0  # Only one channel!
 
         # Try to Load
         try:
-            speech_signal, glottal_flow_derivative_signal, sample_rate = self.loadSignals(speech_signal_file_address,
+            speech_signal, glottal_flow_derivative_signal, sample_rate = self.load_signals(speech_signal_file_address,
                                                                                           glottal_flow_derivative_file_address)
             speech_signal = speech_signal[channel]
             glottal_flow_derivative_signal = glottal_flow_derivative_signal[channel]
@@ -53,7 +53,7 @@ class GIFDataset(data.Dataset):
         """
         return self.num_total
 
-    def getFilesAddress(self, index):
+    def get_files_address(self, index):
         """Reads CSV-File and extracts addresses of speech-signal file and glottal flow derivative-Signal.
         """
         manipulation_name = str.rstrip(self.id_list[index].split(',')[1])
@@ -64,7 +64,7 @@ class GIFDataset(data.Dataset):
         glottal_flow_derivative_file_address = os.path.join(self.dataset_address, subdir_name, glottal_flow_derivative_file_name)
         return speech_signal_file_address, glottal_flow_derivative_file_address
 
-    def loadSignals(self, speech_signal_file_address, glottal_flow_derivative_file_address):
+    def load_signals(self, speech_signal_file_address, glottal_flow_derivative_file_address):
         """Loads speech signal and glottal flow derivative signal
         """
         speech_signal, sample_rate = torchaudio.load(speech_signal_file_address)
