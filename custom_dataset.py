@@ -2,7 +2,7 @@ import torch
 import torch.utils.data as data
 import torchaudio
 import pandas as pd
-
+import os
 
 class GIFDataset(data.Dataset):
     """Custom data.Dataset compatible with data.DataLoader."""
@@ -34,27 +34,18 @@ class GIFDataset(data.Dataset):
             speech_signal, glottal_flow_derivative_signal, sample_rate = self.loadSignals(speech_signal_file_address,
                                                                                           glottal_flow_derivative_file_address)
             speech_signal = speech_signal[channel]
+            glottal_flow_derivative_signal = glottal_flow_derivative_signal[channel]
+            speech_signal, glottal_flow_derivative_signal = self.preprocess(speech_signal, glottal_flow_derivative_signal,
+                                                                        sample_rate)
 
             if speech_signal.size() != glottal_flow_derivative_signal.size():
-                print(
-                    'Problems with signal length:' + speech_signal_file_address + ',' + glottal_flow_derivative_file_address)
+                print('Problems with signal length:' + speech_signal_file_address + ',' + glottal_flow_derivative_file_address)
                 raise IndexError
-
+                
         except:
             print('Error with loading files:' + speech_signal_file_address + ',' + glottal_flow_derivative_file_address)
-            # If files are corrupted jump to next file pair
-            if index < self.num_total - 1:
-                new_index = index + 1
-            else:
-                new_index = index - 1
-            # Hope that next files are not corrupted. Should be optimized in future!
-            speech_signal_file_address, glottal_flow_derivative_file_address = self.getFilesAddress(new_index)
-            speech_signal, glottal_flow_derivative_signal, sample_rate = self.loadSignals(speech_signal_file_address,
-                                                                                          glottal_flow_derivative_file_address)
-            speech_signal = speech_signal[channel]
 
-        speech_signal, glottal_flow_derivative_signal = self.preprocess(speech_signal, glottal_flow_derivative_signal,
-                                                                        sample_rate)
+        
         return speech_signal, glottal_flow_derivative_signal
 
     def __len__(self):
@@ -66,22 +57,18 @@ class GIFDataset(data.Dataset):
         """Reads CSV-File and extracts addresses of speech-signal file and glottal flow derivative-Signal.
         """
         manipulation_name = str.rstrip(self.id_list[index].split(',')[1])
-        sentence_id = "_".join(manipulation_name.split('_')[0:2])
-        subdir_name = "_".join(manipulation_name.split('_')[2:6])
+        subdir_name = "_".join(manipulation_name.split('_')[0:3])
         speech_signal_file_name = manipulation_name + '.wav'
-        glottal_flow_derivative_file_name = sentence_id + '_' + subdir_name + '_GlottalFlowDerivative.misc'
-        speech_signal_file_address = str(self.dataset_address + subdir_name + '/' + speech_signal_file_name)
-        glottal_flow_derivative_file_address = str(
-            self.dataset_address + subdir_name + '/' + glottal_flow_derivative_file_name)
+        glottal_flow_derivative_file_name = manipulation_name + '_GlottalFlowDerivative.wav'
+        speech_signal_file_address = os.path.join(self.dataset_address, subdir_name, speech_signal_file_name)
+        glottal_flow_derivative_file_address = os.path.join(self.dataset_address, subdir_name, glottal_flow_derivative_file_name)
         return speech_signal_file_address, glottal_flow_derivative_file_address
 
     def loadSignals(self, speech_signal_file_address, glottal_flow_derivative_file_address):
         """Loads speech signal and glottal flow derivative signal
         """
         speech_signal, sample_rate = torchaudio.load(speech_signal_file_address)
-        data = pd.read_csv(glottal_flow_derivative_file_address, sep=' ')
-        glottal_flow_derivative = data['glottal_flow_derivative[cm^3/s^2]']
-        glottal_flow_derivative_signal = torch.tensor(glottal_flow_derivative.values)
+        glottal_flow_derivative_signal, _ = torchaudio.load(glottal_flow_derivative_file_address)
         return speech_signal, glottal_flow_derivative_signal, sample_rate
 
     def preprocess(self, speech_signal, glottal_flow_derivative_signal, speech_signal_sample_rate):
@@ -95,13 +82,11 @@ class GIFDataset(data.Dataset):
         # Change Sample-Rate from 44100Hz to 8000Hz
         new_sample_rate = self.output_sample_rate
         # Torch Audio to downsample signals: Algorithm: sinc-interpolation (no low-pass filtering needed)
+        
         downsample = torchaudio.transforms.Resample(speech_signal_sample_rate,
                                                     new_sample_rate,
-                                                    resampling_method='sinc_interpolation')
+                                                    resampling_method='sinc_interp_hann')
 
         down_sampled_speech_signal = downsample(speech_signal)
-        down_sampled_glottal_flow_derivative_signal = downsample(glottal_flow_derivative_signal)
-
-        # print(down_sampled_speech_signal.dtypes)
-
-        return down_sampled_speech_signal, down_sampled_glottal_flow_derivative_signal
+        
+        return down_sampled_speech_signal, glottal_flow_derivative_signal

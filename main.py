@@ -61,23 +61,9 @@ def predict(model_name: str, signal_name: str, device: str):
                                         save_figure,
                                         signal_name)
     
-def train(model_name, dataset_address, **kwargs):
+def train(model_name, dataset_address, load_pretrained_model):
     model_address, model_configuration_file_address, model_folder_address = get_model_paths(model_name)
     
-    train_dataset = GIFDataset(dataset_address, hyperparameters, device, modus='Train')
-
-    # Initialize dataloaders
-    shuffle = True  # shuffle the dataset
-    train_loader = data.DataLoader(train_dataset, hyperparameters["batch_size"], shuffle)
-
-    # Check whether all necessary files are available
-    try:
-        open(dataset_address + 'TrainFiles.csv', mode='r')
-        open(model_configuration_file_address, mode='r')
-        print('Checked Lists')
-    except:
-        print('Not all necessary files are available!')
-
     # Load model configuration file
     with open(model_configuration_file_address) as f:
         hyperparameters = json.load(f)
@@ -92,13 +78,20 @@ def train(model_name, dataset_address, **kwargs):
     else:
         print("Warning: No cuda device detected!")
 
+    train_dataset = GIFDataset(dataset_address, hyperparameters, device, modus='Train')
+
+    # Initialize dataloaders
+    shuffle = True  # shuffle the dataset
+    train_loader = data.DataLoader(train_dataset, hyperparameters["batch_size"], shuffle)
+    print("Dataset loaded successfully!")
+
     # Initialize network and bring it to device
     model = BiLSTM(
         hyperparameters,
         debug_mode=False
     )
 
-    if kwargs["load_pretrained_model"]:
+    if load_pretrained_model:
         model_data = torch.load(model_address)
         model.load_state_dict(model_data['model_state_dict'])
         optimizer = torch.optim.SGD(model.parameters(), hyperparameters['learning_rate'])
@@ -129,7 +122,9 @@ def train(model_name, dataset_address, **kwargs):
                       save_model_progress=False)
 
     # Start timer
+    print("Start training!")
     t1 = time.time()
+    
     
     # Train process
     train_signal_loss_list = trainer.train(model,
@@ -155,22 +150,17 @@ def train(model_name, dataset_address, **kwargs):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-  
-    parser.add_argument("-m", "--model_name", required=False, default='Bi_LSTM_HiddenSize_30_LearnRate_0_01')
-    parser.add_argument("-s", "--signal_name", required=False, default='Marburger_063_Modal_F0Offset2p857_PhoneRate0p846_WhiteNoise30db')
     parser.add_argument("-md", "--mode", required=False, default='predict')
-    parser.add_argument("-d", "--dataset_path", required=False, default='Dataset')
+    parser.add_argument("-m", "--model_name", required=False, default='Bi_LSTM_HiddenSize_30_LearnRate_0_01_TEST')
+    parser.add_argument("-s", "--signal_name", required=False, default='Marburger_063_Modal_F0Offset2p857_PhoneRate0p846_WhiteNoise30db')
+    parser.add_argument("-d", "--dataset_path", required=False, default='Dataset/')
     parser.add_argument("-l", "--load_pretrained_model", required=False, default=False)
     args = parser.parse_args()
     
     if args.mode == "predict":
         predict(args.model_name, args.signal_name, "cpu")
     elif args.mode == "train":
-        if args.load_pretrained_model:
-            train(args.model_name, 
+        train(args.model_name, 
                 args.dataset_path, 
-                load_pretrained_model=args.load_pretrained_model,
-                model_name=args.model_name
+                args.load_pretrained_model,
             )
-        else:
-            train(args.model_name, args.dataset_path, load_pretrained_model=args.load_pretrained_model)
